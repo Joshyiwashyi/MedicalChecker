@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Symptom Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2em;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            display: none;
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            background: #f8f9ff;
+            border-left: 5px solid #667eea;
+        }
+
+        .result.active {
+            display: block;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .result-item h3 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+        }
+
+        .result-item h3::before {
+            content: "•";
+            color: #667eea;
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+
+        .result-item p {
+            color: #555;
+            line-height: 1.6;
+            margin-left: 25px;
+        }
+
+        .error {
+            display: none;
+            background: #fee;
+            border-left: 5px solid #f44;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            color: #c33;
+        }
+
+        .error.active {
+            display: block;
+        }
+
+        .disclaimer {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 10px;
+            font-size: 0.9em;
+            color: #856404;
+            border-left: 5px solid #ffc107;
+        }
+
+        .disclaimer strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 Medical Symptom Checker</h1>
+        <p class="subtitle">Describe your symptoms to get a preliminary diagnosis</p>
+
+        <div class="input-group">
+            <label for="symptoms">What symptoms are you experiencing?</label>
+            <textarea 
+                id="symptoms" 
+                placeholder="Example: I have a fever and cough"
+                required
+            ></textarea>
+        </div>
+
+        <button id="checkBtn" onclick="checkSymptoms()">
+            Check Symptoms
+        </button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #667eea;">Analyzing symptoms...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="result" id="result">
+            <h2>Analysis Results</h2>
+            
+            <div class="result-item">
+                <h3>Possible Condition</h3>
+                <p id="disease"></p>
+            </div>
+
+            <div class="result-item">
+                <h3>Recommended Treatment</h3>
+                <p id="medicine"></p>
+            </div>
+
+            <div class="result-item">
+                <h3>Medical Advice</h3>
+                <p id="advice"></p>
+            </div>
+        </div>
+
+        <div class="disclaimer">
+            <strong>⚠️ Medical Disclaimer</strong>
+            This tool provides preliminary information only and should not replace professional medical advice. Please consult a healthcare provider for proper diagnosis and treatment.
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000/api/predict';
+
+        async function checkSymptoms() {
+            const symptomsInput = document.getElementById('symptoms');
+            const checkBtn = document.getElementById('checkBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            const error = document.getElementById('error');
+
+            const symptoms = symptomsInput.value.trim();
+
+            // Validation
+            if (!symptoms) {
+                showError('Please describe your symptoms');
+                return;
+            }
+
+            // Reset UI
+            result.classList.remove('active');
+            error.classList.remove('active');
+            loading.classList.add('active');
+            checkBtn.disabled = true;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: symptoms })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Display results
+                document.getElementById('disease').textContent = data.disease || 'Unable to determine';
+                document.getElementById('medicine').textContent = data.medicine || 'Please consult a doctor';
+                document.getElementById('advice').textContent = data.advice || 'Seek professional medical advice';
+
+                result.classList.add('active');
+
+            } catch (err) {
+                console.error('Error:', err);
+                showError('Unable to connect to the server. Make sure your backend is running on http://127.0.0.1:5000');
+            } finally {
+                loading.classList.remove('active');
+                checkBtn.disabled = false;
+            }
+        }
+
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.classList.add('active');
+            setTimeout(() => {
+                error.classList.remove('active');
+            }, 5000);
+        }
+
+        // Allow Enter to submit (with Shift+Enter for new line)
+        document.getElementById('symptoms').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                checkSymptoms();
+            }
+        });
+    </script>
+</body>
+</html>
